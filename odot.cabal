@@ -28,5 +28,20 @@ executable odot
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:    base ^>=4.14.1.0
+                    , brick
+                    , vty
+                    , optparse-applicative
+                    , directory
+                    , text
+                    , microlens
+                    , generic-lens
+                    , time
+                    , serialise
     hs-source-dirs:   app
     default-language: Haskell2010
+
+    ghc-options:
+      -Wall
+      -threaded
+      -rtsopts
+      -with-rtsopts=-N
