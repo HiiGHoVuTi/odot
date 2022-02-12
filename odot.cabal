@@ -1,0 +1,32 @@
+cabal-version:      2.4
+name:               odot
+version:            0.1.0.0
+synopsis:
+    Odot is a todo-app made for its creator, and you too if your brain works the same way
+
+-- A longer description of the package.
+-- description:
+homepage:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+license:            NONE
+author:             Maxime
+maintainer:         emixampons@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+executable odot
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base ^>=4.14.1.0
+    hs-source-dirs:   app
+    default-language: Haskell2010
