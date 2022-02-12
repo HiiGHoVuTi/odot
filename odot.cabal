@@ -37,6 +37,7 @@ executable odot
                     , generic-lens
                     , time
                     , serialise
+                    , bytestring
     hs-source-dirs:   app
     default-language: Haskell2010
 
