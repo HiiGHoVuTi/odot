@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric, DeriveAnyClass, RecordWildCards #-}
 
 module Logic (
-  ModelType(..), Todo(..), sortTodos, pPrint, showTime
+  ModelType(..), Todo(..), Done(..), sortTodos, sortTodos', pPrint, showTime, toDone
               ) where
 
 
@@ -10,7 +10,6 @@ import Data.Function
 import Data.List
 import Data.Time
 import GHC.Generics
-
 
 data ModelType = Exponential Double | Linear Double Double | Logarithmic Double
   deriving (Show, Eq, Generic, CS.Serialise)
@@ -23,22 +22,23 @@ data Todo
     , todoMod  :: ModelType
     , tags     :: [String]
     }
-    {-
-  | Done
-    { todoName :: String
-    , todoDone :: UTCTime
-    , todoDue  :: Maybe UTCTime
-    , todoMod  :: ModelType
+  deriving (Generic, CS.Serialise)
+
+data Done = Done
+    { doneName :: String
+    , doneDate :: UTCTime
+    , doneDue  :: Maybe UTCTime
+    , doneMod  :: ModelType
+    , doneTags :: [String]
     }
-    -}
   deriving (Generic, CS.Serialise)
 
 
 showTime :: UTCTime -> String
 showTime = formatTime defaultTimeLocale "%a %d/%m, %l%P"
 
-pPrint :: UTCTime -> [Todo] -> String
-pPrint t = unlines . zipWith showTodo [1..] . sortTodos t
+pPrint :: UTCTime -> [(Int, Todo)] -> String
+pPrint t = unlines . map (uncurry showTodo) . sortTodos' snd t
   where
     showTodo :: Int -> Todo -> String
     showTodo n Todo{..} =
@@ -51,17 +51,42 @@ pPrint t = unlines . zipWith showTodo [1..] . sortTodos t
           <> " | from " <> showTime todoDate
 
 
+toDone :: UTCTime -> Todo -> Done
+toDone t Todo{..} = Done
+  { doneName = todoName
+  , doneDate = t
+  , doneDue  = todoDue
+  , doneMod  = todoMod
+  , doneTags = tags
+  }
+
 sortTodos :: UTCTime -> [Todo] -> [Todo]
-sortTodos t = sortBy (compare `on` getPriority)
+sortTodos = sortTodos' id
+
+sortTodos' :: (a -> Todo) -> UTCTime -> [a] -> [a]
+sortTodos' p' t = sortBy (compare `on` getPriority . p')
   where
+    diffInDays :: UTCTime -> UTCTime -> Double
+    diffInDays t1 t2 =
+      let
+        elapsed = diffUTCTime t1 t2
+        seconds = nominalDiffTimeToSeconds elapsed
+        days    = realToFrac (seconds / (3600 * 24))
+      in days
+
     getPriority Todo{..} = 
       case todoDue of
-        Just dueDate -> 0 :: Double -- TODO(Maxime)
+        Just dueDate ->
+          let
+            totalTime = diffInDays todoDate dueDate
+            elapsed   = diffInDays t todoDate
+           in -case todoMod of
+                 Linear m p    -> p   + elapsed * (m  * 50 - p) / totalTime
+                 Exponential k -> exp $ elapsed * (log (50 * k) / totalTime)
+                 Logarithmic k -> log $ elapsed * (exp (50 * k) / totalTime)
         Nothing      -> 
           let
-            elapsed = diffUTCTime t todoDate 
-            seconds = nominalDiffTimeToSeconds elapsed
-            days    = realToFrac (seconds / (3600 * 24))
+            days    = diffInDays t todoDate
            in -case todoMod of
                 Linear m p    -> m * days + p
                 Exponential k -> exp (k * days / 10)

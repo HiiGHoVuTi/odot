@@ -48,9 +48,8 @@ doTheThing opts = do
      createDirectory =<< baseDir
      writeFile todosPath ""
      writeFile donePath  ""
-
   
-  ioTodos <- getTodos
+  ioTodos <- getSerialisedFile todosPath
   now <- getCurrentTime 
 
   case opts of
@@ -58,9 +57,9 @@ doTheThing opts = do
       chan <- BCh.newBChan 5
       void . forkIO . forever $ do
         t <- getCurrentTime
-        d <- getTodos
+        d <- getSerialisedFile todosPath
         BCh.writeBChan chan (t, d)
-        threadDelay 1_000_000
+        threadDelay 60_000_000
       vty <- V.mkVty V.defaultConfig
       void $ customMain vty (pure vty) (Just chan) app $ AppState
         { todos         = ioTodos
@@ -69,10 +68,12 @@ doTheThing opts = do
         , addTodoEditor = editor "Search" (Just 1) ""
         }
     List Nothing ->
-      putStrLn $ pPrint now ioTodos
+      ioTodos & sortTodos now & zip [1..] & pPrint now & putStrLn
     List (Just tags') ->
-      ioTodos 
-      & filter (flip all tags' . flip elem . tags) 
+      ioTodos
+      & sortTodos now
+      & zip [1..]
+      & filter (flip all tags' . flip elem . tags . snd) 
       & pPrint now & putStrLn
     New todo -> let
       -- NOTE(Maxime): sort 'em ?
@@ -89,9 +90,23 @@ doTheThing opts = do
       binaryD  = CS.serialise newTodos
                    in LBS.writeFile todosPath binaryD
 
-getTodos :: IO [Todo]
-getTodos = do
-  ioTodos' <- CS.deserialiseOrFail . LBS.fromStrict <$> (SBS.readFile . (<> "todos.bin") =<< baseDir)
+    Complete ids -> do
+      ioDone <- getSerialisedFile donePath
+      let 
+        newElem = ioTodos
+          & sortTodos now
+          & zip [1..]
+          & filter ((`elem` ids).fst)
+          & map (toDone now . snd)
+        newDone = newElem ++ ioDone
+        binaryD = CS.serialise newDone
+      LBS.writeFile donePath binaryD
+      doTheThing (Remove ids)
+    
+
+getSerialisedFile :: CS.Serialise a => String -> IO [a]
+getSerialisedFile path = do
+  ioTodos' <- CS.deserialiseOrFail . LBS.fromStrict <$> SBS.readFile path
 
   case ioTodos' of
     Left _  -> pure []

@@ -13,6 +13,7 @@ data Options
   | List (Maybe [String])
   | New Todo
   | Remove [Int]
+  | Complete [Int]
 
 newparser :: Parser Options
 newparser = New <$> todo
@@ -45,9 +46,9 @@ newparser = New <$> todo
 
     parseTime' :: String -> UTCTime
     parseTime' timeString =
-      case parseTimeM True defaultTimeLocale "%-d/%-m %Hh" timeString of
+      case parseTimeM True defaultTimeLocale "%-d/%-m/%-Y %Hh" timeString of
         Just t -> t
-        Nothing -> error "Invalid format, should be DD/MM HHh"
+        Nothing -> error "Invalid format, should be DD/MM/YY HHh"
 
     todo = Todo
       <$> strOption
@@ -59,7 +60,7 @@ newparser = New <$> todo
       optional (strOption
         ( long "due"
        <> metavar "DUE"
-       <> help "the date your todo is due, DD/MM(/YY)-hh"
+       <> help "the date your todo is due, ex: 22/08/1993 12h"
         )))
       <*> pure undefined -- NOTE(Maxime): is replaced later
       <*> (expo <|> lin <|> loga)
@@ -87,6 +88,16 @@ remparser = Remove . pure <$>
    <> help "the unique index of the item to remove"
     )
 
+cmpparser :: Parser Options
+cmpparser = Complete . pure <$>
+  option auto
+    ( long  "idx"
+   <> short 'i'
+   <> metavar "COMPLETEIDX"
+   <> help "the unique index of the item to mark as complete"
+    )
+
+
 optparser :: Parser Options
 optparser 
   =     subparser
@@ -95,7 +106,8 @@ optparser
   <|> subparser
     ( command "list"   (info listParser (progDesc "list current todos"))
    <> command "new"    (info newparser  (progDesc "add a new todo"))
-   <> command "remove" (info remparser  (progDesc "removes a todo by idx"))
+   <> command "remove" (info remparser  (progDesc "removes items"))
+   <> command "done"   (info cmpparser  (progDesc "marks items as done"))
     )
 
 
