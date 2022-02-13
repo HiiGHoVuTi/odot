@@ -66,12 +66,22 @@ doTheThing opts = do
         , editorActive  = False
         , addTodoEditor = editor "Search" (Just 1) ""
         }
+    List     ->
+      putStrLn $ pPrint now ioTodos
     New todo -> let
       -- NOTE(Maxime): sort 'em ?
       stamped  = todo & field @"todoDate" .~ now
       newTodos = stamped : ioTodos
       binaryD  = CS.serialise newTodos
                  in LBS.writeFile todosPath binaryD
+    Remove ids -> let
+      newTodos = ioTodos
+        & sortTodos now
+        & zip [1..]
+        & filter ((`notElem` ids).fst)
+        & map snd
+      binaryD  = CS.serialise newTodos
+                   in LBS.writeFile todosPath binaryD
 
 getTodos :: IO [Todo]
 getTodos = do

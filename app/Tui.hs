@@ -67,8 +67,8 @@ draw s =
 
       drawEditor = foldl1 (<+>).map str
 
-      drawDue _ (Just t) = str ("due "  <> formatTime defaultTimeLocale "%a %d/%m, %l%P" t)
-      drawDue t Nothing  = str ("from " <> formatTime defaultTimeLocale "%a %d/%m, %l%P" t)
+      drawDue _ (Just t) = str ("due "  <> showTime t)
+      drawDue t Nothing  = str ("from " <> showTime t)
 
 
       drawTodo Todo {..} = border $ padAll 1 $

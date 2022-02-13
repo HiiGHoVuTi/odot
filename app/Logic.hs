@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric, DeriveAnyClass, RecordWildCards #-}
 
 module Logic (
-  ModelType(..), Todo(..), sortTodos
+  ModelType(..), Todo(..), sortTodos, pPrint, showTime
               ) where
 
 
@@ -31,6 +31,23 @@ data Todo
     }
     -}
   deriving (Generic, CS.Serialise)
+
+
+showTime :: UTCTime -> String
+showTime = formatTime defaultTimeLocale "%a %d/%m, %l%P"
+
+pPrint :: UTCTime -> [Todo] -> String
+pPrint t = unlines . zipWith showTodo [1..] . sortTodos t
+  where
+    showTodo :: Int -> Todo -> String
+    showTodo n Todo{..} =
+      case todoDue of
+        Just dueDate 
+          -> show n     <> "- " <> todoName 
+          <> " | due "  <> showTime dueDate
+        Nothing
+          -> show n     <> "- " <> todoName 
+          <> " | from " <> showTime todoDate
 
 
 sortTodos :: UTCTime -> [Todo] -> [Todo]
