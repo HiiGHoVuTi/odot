@@ -36,7 +36,7 @@ data Done = Done
 
 -- Tue 03/02/2022, 11am
 showTime :: UTCTime -> String
-showTime = formatTime defaultTimeLocale "%a %d/%m/%Y, %l%P"
+showTime = formatTime defaultTimeLocale "%a %d/%m/%Y,%l%P"
 
 pPrint :: UTCTime -> [(Int, Todo)] -> String
 pPrint t = unlines . map (uncurry showTodo) . sortTodos' snd t

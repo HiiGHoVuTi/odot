@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, TypeApplications, DataKinds, DeriveGeneric, RecordWildCards, DeriveAnyClass, BangPatterns, NumericUnderscores #-}
+{-# LANGUAGE OverloadedStrings, TypeApplications, DataKinds, DeriveGeneric, RecordWildCards, DeriveAnyClass, NumericUnderscores, BangPatterns #-}
 
 module Main where
 
@@ -21,7 +21,6 @@ import qualified Graphics.Vty as V
 import Lens.Micro
 import qualified Options.Applicative as O
 import System.Directory
-
 
 main :: IO ()
 main = O.execParser optinfo >>= doTheThing
@@ -94,7 +93,7 @@ doTheThing opts = do
       -- timestamps the todo
       stamped  = todo & field @"todoDate" .~ now
       newTodos = stamped : ioTodos
-      binaryD  = CS.serialise newTodos
+      !binaryD = CS.serialise newTodos
                  in LBS.writeFile todosPath binaryD
     
     -- Filter-out all matching ids

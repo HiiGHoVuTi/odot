@@ -46,9 +46,9 @@ newparser = New <$> todo
 
     parseTime' :: String -> UTCTime
     parseTime' timeString =
-      case parseTimeM True defaultTimeLocale "%-d/%-m/%-Y %Hh" timeString of
+      case parseTimeM True defaultTimeLocale "%-d/%-m/%-Y%l%P" timeString of
         Just t -> t
-        Nothing -> error "Invalid format, should be DD/MM/YY HHh"
+        Nothing -> error "Invalid format, should be 22/08/1993 8pm"
 
     todo = Todo
       <$> strOption
@@ -60,7 +60,7 @@ newparser = New <$> todo
       optional (strOption
         ( long "due"
        <> metavar "DUE"
-       <> help "the date your todo is due, ex: 22/08/1993 12h"
+       <> help "the date your todo is due, ex: 22/08/1993 8pm"
         )))
       <*> pure undefined -- NOTE(Maxime): is replaced later
       <*> (expo <|> lin <|> loga)
