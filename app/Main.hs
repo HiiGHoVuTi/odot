@@ -91,7 +91,7 @@ doTheThing opts = do
     -- Adds a todo
     New todo -> let
       -- timestamps the todo
-      stamped  = todo & field @"todoDate" .~ now
+      stamped  = todo & field @"todoDate" %~ (Just.(?: now))
       newTodos = stamped : ioTodos
       !binaryD = CS.serialise newTodos
                  in LBS.writeFile todosPath binaryD

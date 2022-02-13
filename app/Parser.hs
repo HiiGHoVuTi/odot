@@ -62,7 +62,12 @@ newparser = New <$> todo
        <> metavar "DUE"
        <> help "the date your todo is due, ex: 22/08/1993 8pm"
         )))
-      <*> pure undefined -- NOTE(Maxime): is replaced later
+      <*> (fmap parseTime' <$>
+      optional (strOption
+        ( long "from"
+       <> metavar "FROM"
+       <> help "the date your todo starts, ex: 22/08/1993 8pm"
+        )))
       <*> (expo <|> lin <|> loga)
       <*> (words <$> strOption
         ( long "tags"

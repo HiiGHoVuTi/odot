@@ -51,6 +51,10 @@ Usage: odot new --name NAME [--due DUE]
 $ ./**/odot/odot new --name "touch grass" -t life --log-coef 1 --due "13/02/2022 8pm"
 ```
 
+### from
+
+date formatted like `29/03/2022 2pm`
+
 ### due
 
 date formatted like `29/03/2022 2pm`

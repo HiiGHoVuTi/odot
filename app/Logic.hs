@@ -1,7 +1,9 @@
 {-# LANGUAGE DeriveGeneric, DeriveAnyClass, RecordWildCards #-}
 
 module Logic (
-  ModelType(..), Todo(..), Done(..), sortTodos, sortTodos', pPrint, showTime, toDone
+  ModelType(..), Todo(..), Done(..), 
+  (?:),
+  sortTodos, sortTodos', pPrint, showTime, toDone
               ) where
 
 
@@ -16,23 +18,26 @@ data ModelType = Exponential Double | Linear Double Double | Logarithmic Double
 
 data Todo
   = Todo
-    { todoName :: String
-    , todoDue  :: Maybe UTCTime
-    , todoDate :: UTCTime
-    , todoMod  :: ModelType
-    , tags     :: [String]
+    { todoName :: !String
+    , todoDue  :: !(Maybe UTCTime)
+    , todoDate :: !(Maybe UTCTime)
+    , todoMod  :: !ModelType
+    , tags     :: ![String]
     }
   deriving (Generic, CS.Serialise)
 
 data Done = Done
-    { doneName :: String
-    , doneDate :: UTCTime
-    , doneDue  :: Maybe UTCTime
-    , doneMod  :: ModelType
-    , doneTags :: [String]
+    { doneName :: !String
+    , doneDate :: !UTCTime
+    , doneDue  :: !(Maybe UTCTime)
+    , doneMod  :: !ModelType
+    , doneTags :: ![String]
     }
   deriving (Generic, CS.Serialise)
 
+(?:) :: Maybe a -> a -> a
+Nothing ?: a = a
+Just a  ?: _ = a
 
 -- Tue 03/02/2022, 11am
 showTime :: UTCTime -> String
@@ -49,7 +54,7 @@ pPrint t = unlines . map (uncurry showTodo) . sortTodos' snd t
           <> " | due "  <> showTime dueDate
         Nothing
           -> show n     <> "- " <> todoName 
-          <> " | from " <> showTime todoDate
+          <> " | from " <> showTime (todoDate ?: t)
 
 
 toDone :: UTCTime -> Todo -> Done
@@ -80,15 +85,15 @@ sortTodos' p' t = sortBy (compare `on` getPriority . p')
       case todoDue of
         Just dueDate ->
           let
-            totalTime = diffInDays todoDate dueDate
-            elapsed   = diffInDays t todoDate
+            totalTime = diffInDays (todoDate ?: t) dueDate
+            elapsed   = diffInDays t (todoDate ?: t)
            in -case todoMod of
                  Linear m p    -> p   + elapsed * (m  * 50 - p) / totalTime
                  Exponential k -> exp $ elapsed * (log (50 * k) / totalTime)
                  Logarithmic k -> log $ elapsed * (exp (50 * k) / totalTime)
         Nothing      -> 
           let
-            days    = diffInDays t todoDate
+            days    = diffInDays t (todoDate ?: t)
            in -case todoMod of
                 Linear m p    -> m * days + p
                 Exponential k -> exp (k * days / 10)

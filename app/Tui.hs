@@ -12,6 +12,7 @@ import Brick.Widgets.Border
 import Brick.Widgets.Center
 import Brick.Widgets.Edit
 import Data.Function
+import Data.Maybe
 import Data.Time
 import Data.Generics.Product hiding (list)
 import GHC.Generics
@@ -19,8 +20,6 @@ import Graphics.Vty.Attributes
 import qualified Graphics.Vty as V
 import qualified Graphics.Vty.Input.Events as K
 import Lens.Micro
-
--- TUI
 
 data AppState
   = AppState 
@@ -74,7 +73,7 @@ draw s =
 
 
       drawTodo Todo {..} = borderWithLabel (drawTags tags) $ padAll 1 $
-        str todoName <+> strWrap " " <+> drawDue todoDate todoDue
+        str todoName <+> strWrap " " <+> drawDue (fromJust todoDate) todoDue
 
 update :: AppState -> BrickEvent String (UTCTime, [Todo]) -> EventM String (Next AppState)
 
