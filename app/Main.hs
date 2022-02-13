@@ -38,6 +38,7 @@ main = O.execParser optinfo >>= doTheThing
 baseDir :: IO FilePath 
 baseDir = fmap (<> "/.odot/") getHomeDirectory
 
+-- | "main" function that runs one action
 doTheThing :: Options -> IO ()
 doTheThing opts = do
   baseDirExists <- doesDirectoryExist =<< baseDir
@@ -53,13 +54,18 @@ doTheThing opts = do
   now <- getCurrentTime 
 
   case opts of
+    
+    -- displays the TUI
     Tui -> do
       chan <- BCh.newBChan 5
+      -- Pings the channel every minute
       void . forkIO . forever $ do
         t <- getCurrentTime
         d <- getSerialisedFile todosPath
         BCh.writeBChan chan (t, d)
         threadDelay 60_000_000
+
+      -- Create the Brick app
       vty <- V.mkVty V.defaultConfig
       void $ customMain vty (pure vty) (Just chan) app $ AppState
         { todos         = ioTodos
@@ -67,20 +73,31 @@ doTheThing opts = do
         , editorActive  = False
         , addTodoEditor = editor "Search" (Just 1) ""
         }
+    
+    -- Displays the list
     List Nothing ->
-      ioTodos & sortTodos now & zip [1..] & pPrint now & putStrLn
+      ioTodos 
+      & sortTodos now 
+      & zip [1..] 
+      & pPrint now & putStrLn
+    
+    -- Filters by taglist then displays
     List (Just tags') ->
       ioTodos
       & sortTodos now
       & zip [1..]
       & filter (flip all tags' . flip elem . tags . snd) 
       & pPrint now & putStrLn
+
+    -- Adds a todo
     New todo -> let
-      -- NOTE(Maxime): sort 'em ?
+      -- timestamps the todo
       stamped  = todo & field @"todoDate" .~ now
       newTodos = stamped : ioTodos
       binaryD  = CS.serialise newTodos
                  in LBS.writeFile todosPath binaryD
+    
+    -- Filter-out all matching ids
     Remove ids -> let
       newTodos = ioTodos
         & sortTodos now
@@ -90,6 +107,7 @@ doTheThing opts = do
       binaryD  = CS.serialise newTodos
                    in LBS.writeFile todosPath binaryD
 
+    -- Get all done items, then turn them into Done objects
     Complete ids -> do
       ioDone <- getSerialisedFile donePath
       let 

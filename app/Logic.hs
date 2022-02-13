@@ -34,8 +34,9 @@ data Done = Done
   deriving (Generic, CS.Serialise)
 
 
+-- Tue 03/02/2022, 11am
 showTime :: UTCTime -> String
-showTime = formatTime defaultTimeLocale "%a %d/%m, %l%P"
+showTime = formatTime defaultTimeLocale "%a %d/%m/%Y, %l%P"
 
 pPrint :: UTCTime -> [(Int, Todo)] -> String
 pPrint t = unlines . map (uncurry showTodo) . sortTodos' snd t
@@ -63,6 +64,7 @@ toDone t Todo{..} = Done
 sortTodos :: UTCTime -> [Todo] -> [Todo]
 sortTodos = sortTodos' id
 
+-- | Generalised sorting function with a predicate
 sortTodos' :: (a -> Todo) -> UTCTime -> [a] -> [a]
 sortTodos' p' t = sortBy (compare `on` getPriority . p')
   where
