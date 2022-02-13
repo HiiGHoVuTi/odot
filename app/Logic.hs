@@ -21,6 +21,7 @@ data Todo
     , todoDue  :: Maybe UTCTime
     , todoDate :: UTCTime
     , todoMod  :: ModelType
+    , tags     :: [String]
     }
     {-
   | Done

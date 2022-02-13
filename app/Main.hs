@@ -42,10 +42,12 @@ doTheThing :: Options -> IO ()
 doTheThing opts = do
   baseDirExists <- doesDirectoryExist =<< baseDir
   todosPath <- (<> "todos.bin") <$> baseDir
+  donePath  <- (<> "done.bin" ) <$> baseDir
 
   unless baseDirExists $ do
      createDirectory =<< baseDir
      writeFile todosPath ""
+     writeFile donePath  ""
 
   
   ioTodos <- getTodos
@@ -66,8 +68,12 @@ doTheThing opts = do
         , editorActive  = False
         , addTodoEditor = editor "Search" (Just 1) ""
         }
-    List     ->
+    List Nothing ->
       putStrLn $ pPrint now ioTodos
+    List (Just tags') ->
+      ioTodos 
+      & filter (flip all tags' . flip elem . tags) 
+      & pPrint now & putStrLn
     New todo -> let
       -- NOTE(Maxime): sort 'em ?
       stamped  = todo & field @"todoDate" .~ now

@@ -10,7 +10,7 @@ import Options.Applicative
 
 data Options
   = Tui
-  | List
+  | List (Maybe [String])
   | New Todo
   | Remove [Int]
 
@@ -63,6 +63,20 @@ newparser = New <$> todo
         )))
       <*> pure undefined -- NOTE(Maxime): is replaced later
       <*> (expo <|> lin <|> loga)
+      <*> (words <$> strOption
+        ( long "tags"
+       <> short 't'
+       <> metavar "TAGS"
+        ))
+
+listParser :: Parser Options
+listParser = List <$>
+  optional (words <$> strOption 
+    ( long "tags"
+   <> short 't'
+   <> metavar "TAGS"
+    )
+  )
 
 remparser :: Parser Options
 remparser = Remove . pure <$>
@@ -76,12 +90,12 @@ remparser = Remove . pure <$>
 optparser :: Parser Options
 optparser 
   =     subparser
-    ( command "tui"    (info (pure Tui)  (progDesc "open the tui"))
+    ( command "tui"    (info (pure Tui) (progDesc "open the tui"))
     )
   <|> subparser
-    ( command "list"   (info (pure List) (progDesc "list current todos"))
-   <> command "new"    (info newparser   (progDesc "add a new todo"))
-   <> command "remove" (info remparser   (progDesc "removes a todo by idx"))
+    ( command "list"   (info listParser (progDesc "list current todos"))
+   <> command "new"    (info newparser  (progDesc "add a new todo"))
+   <> command "remove" (info remparser  (progDesc "removes a todo by idx"))
     )
 
 

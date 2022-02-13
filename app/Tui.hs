@@ -40,6 +40,7 @@ app =
   , appStartEvent   = pure
   , appAttrMap      = const (attrMap defAttr 
     [ (attrName "infoTitle", fg magenta)
+    , (attrName "tag"      , fg cyan)
     ])
   }
 
@@ -65,13 +66,14 @@ draw s =
         withAttr "infoTitle" $
         txt t
 
-      drawEditor = foldl1 (<+>).map str
+      drawEditor = foldl1 (<+>) . map str
+      drawTags   = foldl1 ((<+>).(<+> str", ")) . map (withAttr "tag" . str)
 
       drawDue _ (Just t) = str ("due "  <> showTime t)
       drawDue t Nothing  = str ("from " <> showTime t)
 
 
-      drawTodo Todo {..} = border $ padAll 1 $
+      drawTodo Todo {..} = borderWithLabel (drawTags tags) $ padAll 1 $
         str todoName <+> strWrap " " <+> drawDue todoDate todoDue
 
 update :: AppState -> BrickEvent String (UTCTime, [Todo]) -> EventM String (Next AppState)
