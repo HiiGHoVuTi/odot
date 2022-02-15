@@ -85,7 +85,7 @@ sortTodos' p' t = sortBy (compare `on` getPriority . p')
       case todoDue of
         Just dueDate ->
           let
-            totalTime = diffInDays (todoDate ?: t) dueDate
+            totalTime = diffInDays dueDate (todoDate ?: t)
             elapsed   = diffInDays t (todoDate ?: t)
            in -case todoMod of
                  Linear m p    -> p   + elapsed * (m  * 50 - p) / totalTime
